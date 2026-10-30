@@ -1,17 +1,17 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import './style.css';
-import vertexShader from './shaders/vertex.glsl?raw';
-import fragmentShader from './shaders/fragment.glsl?raw';
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import "./style.css";
+import vertexShader from "./shaders/vertex.glsl?raw";
+import fragmentShader from "./shaders/fragment.glsl?raw";
 
-const container = document.querySelector('#scene');
+const container = document.querySelector("#scene");
 
 if (!(container instanceof HTMLElement)) {
-  throw new Error('Element za Three.js scenu nije pronađen.');
+  throw new Error("Element za Three.js scenu nije pronađen.");
 }
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#101018');
+scene.background = new THREE.Color("#040423");
 
 const camera = new THREE.PerspectiveCamera(
   45,
@@ -47,7 +47,7 @@ function resize() {
   renderer.setSize(width, height);
 }
 
-window.addEventListener('resize', resize);
+window.addEventListener("resize", resize);
 
 function animate() {
   controls.update();
