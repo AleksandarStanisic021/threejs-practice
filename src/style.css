@@ -1,0 +1,30 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: #101018;
+}
+
+main {
+  width: 100%;
+  height: 100%;
+}
+
+#scene {
+  width: 100%;
+  height: 100%;
+}
+
+#scene canvas {
+  display: block;
+}
