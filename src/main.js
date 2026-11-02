@@ -3,6 +3,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import "./style.css";
 import vertexShader from "./shaders/vertex.glsl?raw";
 import fragmentShader from "./shaders/fragment.glsl?raw";
+import terrainVertexShader from "./shaders/terrain-vertex.glsl?raw";
+import terrainFragmentShader from "./shaders/terrain-fragment.glsl?raw";
 
 const container = document.querySelector("#scene");
 
@@ -32,6 +34,31 @@ controls.enableDamping = true;
 
 const cloudMaterials = [];
 
+function getTerrainHeight(x, z) {
+  return (
+    -1.35 +
+    Math.sin(x * 0.28 + z * 0.12) * 0.28 +
+    Math.cos(z * 0.24 - x * 0.15) * 0.22 +
+    Math.sin((x + z) * 0.55) * 0.08
+  );
+}
+
+const terrainMaterial = new THREE.ShaderMaterial({
+  vertexShader: terrainVertexShader,
+  fragmentShader: terrainFragmentShader,
+  extensions: { fragDepth: true },
+  uniforms: {
+    uDayAmount: { value: 0 },
+  },
+});
+const terrain = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  terrainMaterial,
+);
+terrain.rotation.x = -Math.PI / 2;
+terrain.position.y = -5;
+scene.add(terrain);
+
 function createTree(x, z, scale) {
   const tree = new THREE.Group();
   const trunk = new THREE.Mesh(
@@ -55,7 +82,7 @@ function createTree(x, z, scale) {
     tree.add(foliage);
   });
 
-  tree.position.set(x, 0, z);
+  tree.position.set(x, getTerrainHeight(x, z), z);
   tree.scale.setScalar(scale);
   scene.add(tree);
 }
@@ -238,6 +265,7 @@ function animate() {
   const altitude = Math.sin(activeProgress * Math.PI);
   const bodyOpacity = THREE.MathUtils.smoothstep(altitude, 0, 0.22);
   const dayAmount = Math.max(0, Math.sin(phase * Math.PI * 2));
+  terrainMaterial.uniforms.uDayAmount.value = dayAmount;
 
   scene.background.copy(nightSkyColor).lerp(daySkyColor, dayAmount);
   cloudMaterials.forEach((cloudMaterial) => {
