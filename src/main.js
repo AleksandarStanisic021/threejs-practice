@@ -33,10 +33,14 @@ controls.enableDamping = true;
 const material = new THREE.ShaderMaterial({
   vertexShader,
   fragmentShader,
+  uniforms: {
+    uTime: { value: 0 },
+  },
 });
 
 const cube = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.7, 1.7), material);
 scene.add(cube);
+const clock = new THREE.Clock();
 
 function resize() {
   const width = container.clientWidth;
@@ -50,6 +54,7 @@ function resize() {
 window.addEventListener("resize", resize);
 
 function animate() {
+  material.uniforms.uTime.value = clock.getElapsedTime();
   controls.update();
   renderer.render(scene, camera);
 }
