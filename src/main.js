@@ -46,7 +46,6 @@ function getTerrainHeight(x, z) {
 const terrainMaterial = new THREE.ShaderMaterial({
   vertexShader: terrainVertexShader,
   fragmentShader: terrainFragmentShader,
-  extensions: { fragDepth: true },
   uniforms: {
     uDayAmount: { value: 0 },
   },

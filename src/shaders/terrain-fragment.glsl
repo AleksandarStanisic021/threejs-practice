@@ -71,7 +71,5 @@ void main() {
   vec3 color = mix(groundColor, snowColor, snowCover);
   color *= 0.42 + diffuse * 0.58;
 
-  vec4 clipPosition = projectionMatrix * viewMatrix * vec4(hitPoint, 1.0);
-  gl_FragDepthEXT = (clipPosition.z / clipPosition.w) * 0.5 + 0.5;
   gl_FragColor = vec4(color, 1.0);
 }
