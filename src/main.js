@@ -30,6 +30,8 @@ container.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
+const cloudMaterials = [];
+
 function createTree(x, z, scale) {
   const tree = new THREE.Group();
   const trunk = new THREE.Mesh(
@@ -77,6 +79,7 @@ function createCloud(x, y, z, scale) {
     opacity: 0.72,
     depthWrite: false,
   });
+  cloudMaterials.push(puffMaterial);
 
   [
     { x: 0, y: 0, z: 0, scale: [1.5, 0.48, 0.65] },
@@ -105,6 +108,70 @@ const clouds = [
   createCloud(1.7, 5.4, -8, 0.85),
   createCloud(7, 4.3, -6.5, 1.25),
 ];
+
+const sunMaterial = new THREE.MeshBasicMaterial({
+  color: "#fff2a6",
+  transparent: true,
+  depthWrite: false,
+});
+const moonMaterial = new THREE.MeshBasicMaterial({
+  color: "#e5edff",
+  transparent: true,
+  depthWrite: false,
+  side: THREE.DoubleSide,
+});
+const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 16), sunMaterial);
+const moonRadius = 0.42;
+const moonOffset = 0.34;
+const moonIntersectionX = moonOffset / 2;
+const moonIntersectionY = Math.sqrt(moonRadius ** 2 - moonIntersectionX ** 2);
+const moonAngle = Math.atan2(moonIntersectionY, moonIntersectionX);
+const moonShape = new THREE.Shape();
+moonShape.moveTo(moonIntersectionX, moonIntersectionY);
+moonShape.absarc(0, 0, moonRadius, moonAngle, Math.PI * 2 - moonAngle, false);
+moonShape.quadraticCurveTo(
+  moonOffset - moonRadius,
+  0,
+  moonIntersectionX,
+  moonIntersectionY,
+);
+const moon = new THREE.Mesh(new THREE.ShapeGeometry(moonShape), moonMaterial);
+
+const glowCanvas = document.createElement("canvas");
+glowCanvas.width = 128;
+glowCanvas.height = 128;
+const glowContext = glowCanvas.getContext("2d");
+if (!glowContext) {
+  throw new Error("Nije moguće napraviti teksturu sjaja sunca.");
+}
+const glowGradient = glowContext.createRadialGradient(64, 64, 5, 64, 64, 64);
+glowGradient.addColorStop(0, "rgba(255, 246, 190, 1)");
+glowGradient.addColorStop(0.22, "rgba(255, 204, 92, 0.65)");
+glowGradient.addColorStop(1, "rgba(255, 166, 48, 0)");
+glowContext.fillStyle = glowGradient;
+glowContext.fillRect(0, 0, 128, 128);
+
+const glowTexture = new THREE.CanvasTexture(glowCanvas);
+const sunGlow = new THREE.Sprite(
+  new THREE.SpriteMaterial({
+    map: glowTexture,
+    color: "#ffcf70",
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    toneMapped: false,
+  }),
+);
+sunGlow.scale.set(3.2, 3.2, 1);
+sun.position.z = -10;
+moon.position.z = -10;
+sunGlow.position.z = -10.1;
+scene.add(sunGlow, sun, moon);
+const nightSkyColor = new THREE.Color("#040423");
+const daySkyColor = new THREE.Color("#78b9e8");
+const nightCloudColor = new THREE.Color("#7785b5");
+const dayCloudColor = new THREE.Color("#dcecff");
 
 const snowCount = 900;
 const snowPositions = new Float32Array(snowCount * 3);
@@ -162,6 +229,31 @@ function animate() {
   const delta = Math.min(clock.getDelta(), 0.05);
   const elapsed = clock.elapsedTime;
   material.uniforms.uTime.value = elapsed;
+
+  const cycleDuration = 32;
+  const phase = (elapsed % cycleDuration) / cycleDuration;
+  const nightProgress = ((phase + 0.5) % 1) * 2;
+  const sunIsUp = phase < 0.5;
+  const activeProgress = sunIsUp ? phase * 2 : nightProgress;
+  const altitude = Math.sin(activeProgress * Math.PI);
+  const bodyOpacity = THREE.MathUtils.smoothstep(altitude, 0, 0.22);
+  const dayAmount = Math.max(0, Math.sin(phase * Math.PI * 2));
+
+  scene.background.copy(nightSkyColor).lerp(daySkyColor, dayAmount);
+  cloudMaterials.forEach((cloudMaterial) => {
+    cloudMaterial.color.copy(nightCloudColor).lerp(dayCloudColor, dayAmount);
+    cloudMaterial.opacity = 0.48 + dayAmount * 0.24;
+  });
+
+  const celestialX = -8 + activeProgress * 16;
+  const celestialY = 0.4 + altitude * 5.5;
+  const celestialBody = sunIsUp ? sun : moon;
+  const hiddenBody = sunIsUp ? moon : sun;
+  celestialBody.position.set(celestialX, celestialY, -10);
+  celestialBody.material.opacity = bodyOpacity;
+  hiddenBody.material.opacity = 0;
+  sunGlow.position.set(celestialX, celestialY, -10.1);
+  sunGlow.material.opacity = sunIsUp ? bodyOpacity * 0.9 : 0;
 
   for (const cloud of clouds) {
     cloud.position.x += delta * 0.28;
