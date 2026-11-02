@@ -33,6 +33,14 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 const cloudMaterials = [];
+const trunkMaterial = new THREE.MeshBasicMaterial({ color: "#70442f" });
+const firMaterial = new THREE.MeshBasicMaterial({ color: "#176b54" });
+const pineMaterial = new THREE.MeshBasicMaterial({ color: "#247a68" });
+const leafMaterials = [
+  new THREE.MeshBasicMaterial({ color: "#3d8b50" }),
+  new THREE.MeshBasicMaterial({ color: "#7a9b45" }),
+  new THREE.MeshBasicMaterial({ color: "#b7683e" }),
+];
 
 function getTerrainHeight(x, z) {
   return (
@@ -58,28 +66,48 @@ terrain.rotation.x = -Math.PI / 2;
 terrain.position.y = -5;
 scene.add(terrain);
 
-function createTree(x, z, scale) {
+function createTree(x, z, scale, kind = "fir", leafColor = 0) {
   const tree = new THREE.Group();
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.11, 0.16, 1.1, 6),
-    new THREE.MeshBasicMaterial({ color: "#70442f" }),
-  );
-  trunk.position.y = 0.55;
+  const trunkHeight = kind === "broadleaf" ? 1.35 : 1.1;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, trunkHeight, 6), trunkMaterial);
+  trunk.position.y = trunkHeight / 2;
   tree.add(trunk);
 
-  const foliageMaterial = new THREE.MeshBasicMaterial({ color: "#176b54" });
-  [
-    { radius: 0.85, height: 1.25, y: 1.05 },
-    { radius: 0.68, height: 1.1, y: 1.65 },
-    { radius: 0.48, height: 0.95, y: 2.2 },
-  ].forEach(({ radius, height, y }) => {
-    const foliage = new THREE.Mesh(
-      new THREE.ConeGeometry(radius, height, 7),
-      foliageMaterial,
-    );
-    foliage.position.y = y;
-    tree.add(foliage);
-  });
+  if (kind === "broadleaf") {
+    [
+      { x: 0, y: 1.75, z: 0, radius: 0.72 },
+      { x: -0.42, y: 1.55, z: 0.08, radius: 0.48 },
+      { x: 0.42, y: 1.55, z: -0.05, radius: 0.5 },
+      { x: 0.05, y: 2.15, z: 0, radius: 0.48 },
+    ].forEach(({ x, y, z: offsetZ, radius }) => {
+      const crown = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 10, 8),
+        leafMaterials[leafColor],
+      );
+      crown.position.set(x, y, offsetZ);
+      tree.add(crown);
+    });
+  } else {
+    const layers =
+      kind === "pine"
+        ? [
+            { radius: 0.68, height: 1.35, y: 1.25 },
+            { radius: 0.55, height: 1.2, y: 1.85 },
+          ]
+        : [
+            { radius: 0.85, height: 1.25, y: 1.05 },
+            { radius: 0.68, height: 1.1, y: 1.65 },
+            { radius: 0.48, height: 0.95, y: 2.2 },
+          ];
+    layers.forEach(({ radius, height, y }) => {
+      const foliage = new THREE.Mesh(
+        new THREE.ConeGeometry(radius, height, 7),
+        kind === "pine" ? pineMaterial : firMaterial,
+      );
+      foliage.position.y = y;
+      tree.add(foliage);
+    });
+  }
 
   tree.position.set(x, getTerrainHeight(x, z), z);
   tree.scale.setScalar(scale);
@@ -87,15 +115,191 @@ function createTree(x, z, scale) {
 }
 
 [
-  [-5.2, -5.5, 1.15],
-  [-3.9, -4.6, 0.9],
-  [-2.8, -6.8, 1.25],
-  [-1.8, -5.1, 0.75],
-  [2.1, -5.8, 0.9],
-  [3.2, -7, 1.2],
-  [4.3, -4.7, 0.85],
-  [5.4, -6.2, 1.1],
-].forEach(([x, z, scale]) => createTree(x, z, scale));
+  [-9, -12, 1.05, "fir"],
+  [-6, -13, 0.8, "broadleaf", 1],
+  [-3, -12, 0.9, "pine"],
+  [2, -13, 1.1, "fir"],
+  [6, -12, 0.85, "broadleaf", 0],
+  [9, -11, 1.15, "pine"],
+  [-8, -9, 0.8, "broadleaf", 2],
+  [-5, -8, 1.2, "fir"],
+  [-2, -9, 0.7, "pine"],
+  [3, -9, 0.9, "broadleaf", 1],
+  [6, -8, 1.1, "fir"],
+  [9, -7, 0.8, "broadleaf", 0],
+  [-9, -5, 1.2, "pine"],
+  [-6, -4, 0.85, "broadleaf", 1],
+  [-3, -6, 1.05, "fir"],
+  [3, -5, 0.8, "pine"],
+  [6, -4, 1.2, "fir"],
+  [9, -5, 0.9, "broadleaf", 2],
+  [-8, -1, 0.8, "fir"],
+  [-5, 1, 1.1, "broadleaf", 0],
+  [5, 1, 0.9, "pine"],
+  [8, 0, 1.15, "broadleaf", 1],
+  [-9, 4, 1, "pine"],
+  [-6, 5, 0.8, "broadleaf", 2],
+  [6, 5, 1.05, "fir"],
+  [9, 4, 0.85, "broadleaf", 0],
+].forEach(([x, z, scale, kind, leafColor = 0]) =>
+  createTree(x, z, scale, kind, leafColor),
+);
+
+function createCastle() {
+  const castle = new THREE.Group();
+  const stoneMaterial = new THREE.MeshBasicMaterial({ color: "#b9c9df" });
+  const lightStoneMaterial = new THREE.MeshBasicMaterial({ color: "#e5edf7" });
+  const roofMaterial = new THREE.MeshBasicMaterial({ color: "#344b78" });
+  const shadowMaterial = new THREE.MeshBasicMaterial({ color: "#18243d" });
+  const windowMaterial = new THREE.MeshBasicMaterial({ color: "#ffd27a" });
+  const bannerMaterial = new THREE.MeshBasicMaterial({
+    color: "#c94357",
+    side: THREE.DoubleSide,
+  });
+
+  const wall = new THREE.Mesh(
+    new THREE.BoxGeometry(5.2, 2.4, 3.2),
+    stoneMaterial,
+  );
+  wall.position.y = 1.2;
+  castle.add(wall);
+
+  const lowerTrim = new THREE.Mesh(
+    new THREE.BoxGeometry(5.35, 0.18, 3.32),
+    lightStoneMaterial,
+  );
+  lowerTrim.position.y = 0.3;
+  castle.add(lowerTrim);
+
+  const battlements = [];
+  for (let x = -2.35; x <= 2.36; x += 0.58) {
+    battlements.push([x, 2.6, 0, 0.32, 0.38, 0.38]);
+  }
+  for (let z = -1.25; z <= 1.26; z += 0.62) {
+    battlements.push([-2.62, 2.6, z, 0.38, 0.38, 0.32]);
+    battlements.push([2.62, 2.6, z, 0.38, 0.38, 0.32]);
+  }
+  battlements.forEach(([x, y, z, width, height, depth]) => {
+    const merlon = new THREE.Mesh(
+      new THREE.BoxGeometry(width, height, depth),
+      lightStoneMaterial,
+    );
+    merlon.position.set(x, y, z);
+    castle.add(merlon);
+  });
+
+  const towerPositions = [
+    [-2.55, -1.55, 3.6],
+    [2.55, -1.55, 3.6],
+    [-2.55, 1.55, 3.15],
+    [2.55, 1.55, 3.15],
+  ];
+  towerPositions.forEach(([x, z, height]) => {
+    const tower = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.58, 0.68, height, 10),
+      lightStoneMaterial,
+    );
+    tower.position.set(x, height / 2, z);
+    castle.add(tower);
+
+    const roof = new THREE.Mesh(
+      new THREE.ConeGeometry(0.82, 1.45, 10),
+      roofMaterial,
+    );
+    roof.position.set(x, height + 0.72, z);
+    castle.add(roof);
+
+    const roofFinial = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 8, 6),
+      windowMaterial,
+    );
+    roofFinial.position.set(x, height + 1.48, z);
+    castle.add(roofFinial);
+
+    for (const windowY of [1.25, 2.25]) {
+      const slit = new THREE.Mesh(
+        new THREE.BoxGeometry(0.13, 0.36, 0.035),
+        windowMaterial,
+      );
+      slit.position.set(x, windowY, z + 0.59);
+      castle.add(slit);
+    }
+  });
+
+  const keep = new THREE.Mesh(
+    new THREE.BoxGeometry(2.15, 2.5, 1.8),
+    lightStoneMaterial,
+  );
+  keep.position.set(0, 2.15, -0.5);
+  castle.add(keep);
+
+  const keepRoof = new THREE.Mesh(
+    new THREE.ConeGeometry(1.55, 1.5, 4),
+    roofMaterial,
+  );
+  keepRoof.position.set(0, 4.15, -0.5);
+  keepRoof.rotation.y = Math.PI / 4;
+  castle.add(keepRoof);
+
+  for (const x of [-0.62, 0.62]) {
+    const keepWindow = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 0.48, 0.04),
+      windowMaterial,
+    );
+    keepWindow.position.set(x, 2.55, 0.42);
+    castle.add(keepWindow);
+  }
+
+  const gateShape = new THREE.Shape();
+  gateShape.moveTo(-0.55, 0);
+  gateShape.lineTo(-0.55, 1.05);
+  gateShape.quadraticCurveTo(-0.55, 1.65, 0, 1.65);
+  gateShape.quadraticCurveTo(0.55, 1.65, 0.55, 1.05);
+  gateShape.lineTo(0.55, 0);
+  gateShape.closePath();
+  const gate = new THREE.Mesh(
+    new THREE.ShapeGeometry(gateShape),
+    shadowMaterial,
+  );
+  gate.position.set(0, 0, 1.62);
+  castle.add(gate);
+
+  const drawbridge = new THREE.Mesh(
+    new THREE.BoxGeometry(1.25, 0.16, 1.55),
+    new THREE.MeshBasicMaterial({ color: "#72513d" }),
+  );
+  drawbridge.position.set(0, 0.12, 2.3);
+  castle.add(drawbridge);
+
+  for (const x of [-1.4, 1.4]) {
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 1.25, 6),
+      windowMaterial,
+    );
+    pole.position.set(x, 3.5, 1.52);
+    castle.add(pole);
+
+    const bannerShape = new THREE.Shape();
+    bannerShape.moveTo(0, 0.55);
+    bannerShape.lineTo(0.48, 0.55);
+    bannerShape.lineTo(0.48, -0.18);
+    bannerShape.lineTo(0.24, -0.02);
+    bannerShape.lineTo(0, -0.18);
+    bannerShape.closePath();
+    const banner = new THREE.Mesh(
+      new THREE.ShapeGeometry(bannerShape),
+      bannerMaterial,
+    );
+    banner.position.set(x + 0.04, 3.88, 1.54);
+    castle.add(banner);
+  }
+
+  castle.position.set(-5.5, getTerrainHeight(-5.5, -8), -8);
+  castle.scale.setScalar(0.52);
+  scene.add(castle);
+}
+
+createCastle();
 
 function createCloud(x, y, z, scale) {
   const cloud = new THREE.Group();
@@ -130,9 +334,12 @@ function createCloud(x, y, z, scale) {
 }
 
 const clouds = [
-  createCloud(-5.5, 4.7, -7, 1.1),
-  createCloud(1.7, 5.4, -8, 0.85),
-  createCloud(7, 4.3, -6.5, 1.25),
+  createCloud(-8, 5.5, -10, 1.05),
+  createCloud(-4.5, 4.7, -7, 0.8),
+  createCloud(-1, 5.8, -11, 1.1),
+  createCloud(2.5, 4.8, -8, 0.85),
+  createCloud(6, 5.7, -10, 1.15),
+  createCloud(9, 4.5, -7, 0.9),
 ];
 
 const sunMaterial = new THREE.MeshBasicMaterial({
