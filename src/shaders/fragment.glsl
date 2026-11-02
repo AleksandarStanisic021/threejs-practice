@@ -92,5 +92,5 @@ void main() {
 
   vec3 lightDirection = normalize(vec3(-0.45, 0.8, 0.65));
   float lighting = 0.38 + 0.62 * max(dot(normalize(vNormal), lightDirection), 0.0);
-  gl_FragColor = vec4(color * lighting, 1.0);
+  gl_FragColor = vec4(color * lighting, 0.5);
 }
