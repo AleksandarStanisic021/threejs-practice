@@ -147,13 +147,13 @@ function createTree(x, z, scale, kind = "fir", leafColor = 0) {
 
 function createCastle() {
   const castle = new THREE.Group();
-  const stoneMaterial = new THREE.MeshBasicMaterial({ color: "#b9c9df" });
-  const lightStoneMaterial = new THREE.MeshBasicMaterial({ color: "#e5edf7" });
-  const roofMaterial = new THREE.MeshBasicMaterial({ color: "#344b78" });
-  const shadowMaterial = new THREE.MeshBasicMaterial({ color: "#18243d" });
-  const windowMaterial = new THREE.MeshBasicMaterial({ color: "#ffd27a" });
+  const stoneMaterial = new THREE.MeshBasicMaterial({ color: "#d99b24" });
+  const lightStoneMaterial = new THREE.MeshBasicMaterial({ color: "#ffd96a" });
+  const roofMaterial = new THREE.MeshBasicMaterial({ color: "#9b5420" });
+  const shadowMaterial = new THREE.MeshBasicMaterial({ color: "#56351f" });
+  const windowMaterial = new THREE.MeshBasicMaterial({ color: "#fff7bb" });
   const bannerMaterial = new THREE.MeshBasicMaterial({
-    color: "#c94357",
+    color: "#8f2638",
     side: THREE.DoubleSide,
   });
 
@@ -293,6 +293,35 @@ function createCastle() {
     banner.position.set(x + 0.04, 3.88, 1.54);
     castle.add(banner);
   }
+
+  const glowCanvas = document.createElement("canvas");
+  glowCanvas.width = 128;
+  glowCanvas.height = 128;
+  const glowContext = glowCanvas.getContext("2d");
+  if (!glowContext) {
+    throw new Error("Nije moguće napraviti teksturu sjaja dvorca.");
+  }
+  const glowGradient = glowContext.createRadialGradient(64, 64, 4, 64, 64, 64);
+  glowGradient.addColorStop(0, "rgba(255, 220, 100, 0.8)");
+  glowGradient.addColorStop(0.35, "rgba(255, 184, 55, 0.34)");
+  glowGradient.addColorStop(1, "rgba(255, 155, 25, 0)");
+  glowContext.fillStyle = glowGradient;
+  glowContext.fillRect(0, 0, 128, 128);
+
+  const castleGlow = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(glowCanvas),
+      color: "#ffd45c",
+      transparent: true,
+      opacity: 0.78,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  castleGlow.position.set(0, 2.8, -0.8);
+  castleGlow.scale.set(9, 8, 1);
+  castle.add(castleGlow);
 
   castle.position.set(-5, getTerrainHeight(-5, -5), -5);
   castle.scale.setScalar(0.52);
