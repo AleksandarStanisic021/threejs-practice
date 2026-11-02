@@ -122,14 +122,14 @@ function createTree(x, z, scale, kind = "fir", leafColor = 0) {
   [6, -12, 0.85, "broadleaf", 0],
   [9, -11, 1.15, "pine"],
   [-8, -9, 0.8, "broadleaf", 2],
-  [-5, -8, 1.2, "fir"],
+  [-2, -11, 1.2, "fir"],
   [-2, -9, 0.7, "pine"],
   [3, -9, 0.9, "broadleaf", 1],
   [6, -8, 1.1, "fir"],
   [9, -7, 0.8, "broadleaf", 0],
   [-9, -5, 1.2, "pine"],
-  [-6, -4, 0.85, "broadleaf", 1],
-  [-3, -6, 1.05, "fir"],
+  [-9, -3, 0.85, "broadleaf", 1],
+  [-1, -5, 1.05, "fir"],
   [3, -5, 0.8, "pine"],
   [6, -4, 1.2, "fir"],
   [9, -5, 0.9, "broadleaf", 2],
@@ -294,7 +294,7 @@ function createCastle() {
     castle.add(banner);
   }
 
-  castle.position.set(-5.5, getTerrainHeight(-5.5, -8), -8);
+  castle.position.set(-5, getTerrainHeight(-5, -5), -5);
   castle.scale.setScalar(0.52);
   scene.add(castle);
 }
